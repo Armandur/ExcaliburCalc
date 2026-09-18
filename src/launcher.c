@@ -34,6 +34,55 @@ static void ForceForeground(HWND hwnd)
         AttachThreadInput(myTid, fgTid, FALSE);
 }
 
+// Flyttar fönstret så det hamnar centrerat under muspekaren, men klampat
+// innanför arbetsytan på den skärm pekaren står på - annars hamnar räknaren
+// delvis utanför kanten eller bakom aktivitetsfältet.
+static void MoveToCursor(HWND hwnd)
+{
+    POINT pt;
+    RECT wr;
+    MONITORINFO mi;
+    HMONITOR mon;
+    int w, h, x, y;
+
+    if (!GetCursorPos(&pt)) return;
+    if (!GetWindowRect(hwnd, &wr)) return;
+
+    w = wr.right - wr.left;
+    h = wr.bottom - wr.top;
+
+    mon = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+    mi.cbSize = sizeof(mi);
+    if (!GetMonitorInfo(mon, &mi)) return;
+
+    x = pt.x - w / 2;
+    y = pt.y - h / 2;
+
+    if (x + w > mi.rcWork.right)  x = mi.rcWork.right - w;
+    if (y + h > mi.rcWork.bottom) y = mi.rcWork.bottom - h;
+    if (x < mi.rcWork.left)       x = mi.rcWork.left;
+    if (y < mi.rcWork.top)        y = mi.rcWork.top;
+
+    // NOZORDER bevarar alltid-överst-läget om räknaren står i det.
+    SetWindowPos(hwnd, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+// Väntar tills Excalibur registrerat sitt fönster. WaitForInputIdle räcker
+// oftast, men dialogen skapas i WinMain innan meddelandeloopen startar.
+static HWND WaitForWindow(DWORD timeoutMs)
+{
+    DWORD waited = 0;
+    HWND hwnd = FindWindowA(WINDOW_CLASS, NULL);
+
+    while (!hwnd && waited < timeoutMs)
+    {
+        Sleep(50);
+        waited += 50;
+        hwnd = FindWindowA(WINDOW_CLASS, NULL);
+    }
+    return hwnd;
+}
+
 // Bygger sökvägen till Excal32.exe i samma katalog som launchern.
 static BOOL BuildTargetPath(char *path, char *dir, DWORD dirSize)
 {
@@ -76,6 +125,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (hwnd)
     {
         ForceForeground(hwnd);
+        MoveToCursor(hwnd);
         if (mutex) { ReleaseMutex(mutex); CloseHandle(mutex); }
         return 0;
     }
@@ -106,6 +156,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WaitForInputIdle(pi.hProcess, 10000);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
+
+    hwnd = WaitForWindow(5000);
+    if (hwnd)
+        MoveToCursor(hwnd);
 
     if (mutex) { ReleaseMutex(mutex); CloseHandle(mutex); }
     return 0;

@@ -55,3 +55,14 @@ tangenten.
 
 Räknaren är RPN. Det finns ingen `=`-tangent: mata in talet, tryck Enter, mata
 in nästa tal, tryck operator.
+
+## Fönsterplacering
+
+Launchern flyttar räknaren till muspekaren varje gång - både när den startar
+den och när den hämtar fram ett fönster som redan är öppet. Fönstret centreras
+under pekaren och klampas innanför arbetsytan på den skärm pekaren står på, så
+det aldrig hamnar bakom aktivitetsfältet eller utanför skärmkanten.
+
+Excalibur sparar sin fönsterposition när den stängs. Positionen som sparas blir
+alltså den sista launchern flyttade den till - räknaren öppnas ändå alltid vid
+pekaren, så det märks inte.
