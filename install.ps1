@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Installerar Excalibur RPN-räknare och binder calc-knappen på tangentbordet till den.
 
@@ -30,12 +30,34 @@ param(
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+# Stoppar en Excalibur som redan körs från installationsmappen - annars låser
+# den sin egen exe och kopieringen faller. Rör bara processer vars sökväg
+# ligger i InstallDir, inte något annat som råkar heta likadant.
+function Stop-InstalledProcesses {
+    param([string]$Dir)
+
+    $names = @('Excal32', 'excalibur-launcher')
+    $running = Get-Process -Name $names -ErrorAction SilentlyContinue |
+               Where-Object { $_.Path -and $_.Path.StartsWith($Dir, [StringComparison]::OrdinalIgnoreCase) }
+
+    foreach ($proc in $running) {
+        Write-Host "Stänger $($proc.ProcessName) (PID $($proc.Id)) som körs från $Dir"
+        $proc.CloseMainWindow() | Out-Null
+        if (-not $proc.WaitForExit(3000)) {
+            $proc.Kill()
+            $proc.WaitForExit(3000) | Out-Null
+        }
+    }
+}
+
 $launcherSource = Join-Path $PSScriptRoot 'dist\excalibur-launcher.exe'
 if (-not (Test-Path $launcherSource)) {
     throw "Hittar inte $launcherSource. Bygg den först med build.sh."
 }
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+
+Stop-InstalledProcesses -Dir $InstallDir
 
 if (-not $SkipDownload) {
     Write-Host "Hämtar senaste Excalibur-release..."

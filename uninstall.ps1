@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Tar bort bindningen av calc-knappen och, om du vill, installationsmappen.
 
@@ -23,6 +23,10 @@ if (Test-Path $appKey) {
 }
 
 if ($RemoveFiles -and (Test-Path $InstallDir)) {
+    Get-Process -Name 'Excal32','excalibur-launcher' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.StartsWith($InstallDir, [StringComparison]::OrdinalIgnoreCase) } |
+        ForEach-Object { $_.CloseMainWindow() | Out-Null; $_.WaitForExit(3000) | Out-Null }
+
     Remove-Item $InstallDir -Recurse -Force
     Write-Host "Tog bort $InstallDir"
 }

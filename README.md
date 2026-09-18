@@ -33,6 +33,12 @@ Kopiera mappen till Windows-datorn och kör i PowerShell:
 
     .\install.ps1 -RestartExplorer
 
+PowerShell varnar för skript som kommer från en nätverksresurs. Slipp frågan
+med `Unblock-File .\install.ps1`, eller kopiera mappen till en lokal disk först.
+
+Skriptet stänger en Excalibur som redan körs från installationsmappen innan det
+skriver över filerna, så det går att köra om för att uppgradera.
+
 Skriptet hämtar senaste Excalibur-release från GitHub, lägger den i
 `%LOCALAPPDATA%\Excalibur` tillsammans med launchern, och skriver registervärdet.
 Utan `-RestartExplorer` slår bindningen igenom först när du loggat ut och in.
