@@ -50,9 +50,24 @@ function Stop-InstalledProcesses {
     }
 }
 
+# Launchern ligger i dist\ när du kör från en utcheckad repo-kopia eller ur
+# release-zippen. Saknas den hämtas den från senaste release i stället, så det
+# räcker att ha det här skriptet.
 $launcherSource = Join-Path $PSScriptRoot 'dist\excalibur-launcher.exe'
+$launcherTemp = $null
+
 if (-not (Test-Path $launcherSource)) {
-    throw "Hittar inte $launcherSource. Bygg den först med build.sh."
+    Write-Host "Hämtar launchern från senaste release..."
+    $launcherRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/Armandur/ExcaliburCalc/releases/latest' `
+                                         -Headers @{ 'User-Agent' = 'excalibur-installer' }
+    $launcherAsset = $launcherRelease.assets | Where-Object { $_.name -eq 'excalibur-launcher.exe' } | Select-Object -First 1
+    if (-not $launcherAsset) {
+        throw "Ingen excalibur-launcher.exe i release $($launcherRelease.tag_name). Bygg den själv med build.sh."
+    }
+
+    $launcherTemp = Join-Path ([IO.Path]::GetTempPath()) ("excalibur-launcher-" + [guid]::NewGuid() + ".exe")
+    Invoke-WebRequest -Uri $launcherAsset.browser_download_url -OutFile $launcherTemp -UseBasicParsing
+    $launcherSource = $launcherTemp
 }
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
@@ -116,6 +131,10 @@ if ($after.ShellExecute -ne $launcher) {
 }
 
 Write-Host "Calc-knappen pekar nu på $launcher"
+
+if ($launcherTemp -and (Test-Path $launcherTemp)) {
+    Remove-Item $launcherTemp -Force -ErrorAction SilentlyContinue
+}
 
 if ($RestartExplorer) {
     Write-Host "Startar om Explorer..."

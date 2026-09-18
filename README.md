@@ -24,24 +24,35 @@ starta två instanser.
 
 ## Installera
 
-Bygg launchern på Linux:
-
-    sudo apt install gcc-mingw-w64-x86-64
-    ./build.sh
-
-Kopiera mappen till Windows-datorn och kör i PowerShell:
+Hämta `ExcaliburCalc.zip` från [senaste release](https://github.com/Armandur/ExcaliburCalc/releases/latest),
+packa upp den, och kör i PowerShell:
 
     .\install.ps1 -RestartExplorer
 
-PowerShell varnar för skript som kommer från en nätverksresurs. Slipp frågan
-med `Unblock-File .\install.ps1`, eller kopiera mappen till en lokal disk först.
+Skriptet hämtar senaste Excalibur-release från GitHub, lägger den i
+`%LOCALAPPDATA%\Excalibur` tillsammans med launchern, och verifierar
+registervärdet efteråt. Utan `-RestartExplorer` slår bindningen igenom först när
+du loggat ut och in.
+
+Kör du `install.ps1` ensamt, utan `dist\excalibur-launcher.exe` bredvid, hämtar
+det launchern från releasen på egen hand.
+
+PowerShell varnar för skript som kommer från en nätverksresurs eller från nätet.
+Slipp frågan med `Unblock-File .\install.ps1`.
 
 Skriptet stänger en Excalibur som redan körs från installationsmappen innan det
 skriver över filerna, så det går att köra om för att uppgradera.
 
-Skriptet hämtar senaste Excalibur-release från GitHub, lägger den i
-`%LOCALAPPDATA%\Excalibur` tillsammans med launchern, och skriver registervärdet.
-Utan `-RestartExplorer` slår bindningen igenom först när du loggat ut och in.
+### Bygga själv
+
+Launchern korskompileras på Linux:
+
+    sudo apt install gcc-mingw-w64-x86-64
+    ./build.sh
+
+Releaser byggs på samma sätt av GitHub Actions när en tagg `v*` pushas
+(`.github/workflows/release.yml`), så binären i en release går att spåra till
+källkoden.
 
 ## Avinstallera
 
