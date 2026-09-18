@@ -72,3 +72,9 @@ det aldrig hamnar bakom aktivitetsfältet eller utanför skärmkanten.
 Excalibur sparar sin fönsterposition när den stängs. Positionen som sparas blir
 alltså den sista launchern flyttade den till - räknaren öppnas ändå alltid vid
 pekaren, så det märks inte.
+
+## Licens
+
+MIT, se [LICENSE](LICENSE). Excalibur självt är ett separat MIT-licensierat
+projekt av Dave Bernazzani och ingår inte här - installationsskriptet hämtar
+det från GitHub vid installation.
