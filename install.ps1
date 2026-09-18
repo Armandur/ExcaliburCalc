@@ -72,11 +72,26 @@ Copy-Item $launcherSource $launcher -Force
 # AppKey 18 är calc-knappen (VK_LAUNCH_APP2). Explorer läser ShellExecute här.
 $appKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\AppKey\18'
 New-Item -Path $appKey -Force | Out-Null
-Set-ItemProperty -Path $appKey -Name 'ShellExecute' -Value $launcher -Type String
 
-# Association vinner över ShellExecute om den ligger kvar.
+# Association och RegisteredApp slår igenom före ShellExecute, så de måste bort
+# först - annars pekar knappen kvar på Windows kalkylator.
 Remove-ItemProperty -Path $appKey -Name 'Association' -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path $appKey -Name 'RegisteredApp' -ErrorAction SilentlyContinue
+
+Set-ItemProperty -Path $appKey -Name 'ShellExecute' -Value $launcher -Type String
+
+# Läs tillbaka nyckeln. Står Association kvar, eller pekar ShellExecute fel, är
+# bindningen inte gjord - då ska skriptet falla, inte påstå att allt gick bra.
+$after = Get-ItemProperty -Path $appKey
+if ($after.PSObject.Properties.Name -contains 'Association') {
+    throw "Association ligger kvar i $appKey och vinner över ShellExecute. Ta bort den manuellt i regedit."
+}
+if ($after.PSObject.Properties.Name -contains 'RegisteredApp') {
+    throw "RegisteredApp ligger kvar i $appKey och vinner över ShellExecute. Ta bort den manuellt i regedit."
+}
+if ($after.ShellExecute -ne $launcher) {
+    throw "ShellExecute i $appKey blev '$($after.ShellExecute)', förväntade '$launcher'."
+}
 
 Write-Host "Calc-knappen pekar nu på $launcher"
 
